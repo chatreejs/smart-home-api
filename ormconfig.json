@@ -1,0 +1,14 @@
+{
+  "type": "mssql",
+  "host": "localhost",
+  "username": "sa",
+  "password": "P@ssw0rd",
+  "database": "SmartHome",
+  "entities": [
+    "dist/**/*.entity{.ts,.js}"
+  ],
+  "synchronize": true,
+  "options": {
+    "trustServerCertificate": true
+  }
+}
