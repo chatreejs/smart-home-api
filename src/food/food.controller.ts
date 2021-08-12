@@ -8,7 +8,8 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FoodRequest } from 'src/core/model/request/food-request';
 import {
   FoodResponse,
   FoodStatus,
@@ -65,7 +66,9 @@ export class FoodController {
   }
 
   @Post()
-  createFood(@Body() food: any) {
+  @HttpCode(201)
+  @ApiBody({ type: FoodRequest })
+  createFood(@Body() food: FoodRequest) {
     this.foodService.createFood(food);
   }
 

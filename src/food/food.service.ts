@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { FoodRequest } from 'src/core/model/request/food-request';
 import { Repository } from 'typeorm';
 import { Food } from './food.entity';
 
@@ -17,12 +18,12 @@ export class FoodService {
     return await this.foodRepository.findOne(id);
   }
 
-  createFood(data) {
+  createFood(data: FoodRequest) {
     const food = new Food();
     food.name = data.name;
     food.quantity = data.quantity;
-    food.buyDate = new Date(data.buyDate * 1000);
-    food.expireDate = new Date(data.expireDate * 1000);
+    food.buyDate = new Date(data.buyDate);
+    food.expireDate = new Date(data.expireDate);
     this.foodRepository.save(food);
   }
 }
