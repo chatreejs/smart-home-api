@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsDateString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class FoodRequest {
   @ApiProperty()
@@ -9,6 +9,10 @@ export class FoodRequest {
   @ApiProperty()
   @IsNumber()
   quantity: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  unit: string;
 
   @ApiProperty()
   @IsDateString()

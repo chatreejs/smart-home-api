@@ -11,6 +11,9 @@ export class FoodResponse {
   quantity: number;
 
   @ApiProperty()
+  unit: string;
+
+  @ApiProperty()
   buyDate: Date;
 
   @ApiProperty()
@@ -22,5 +25,6 @@ export class FoodResponse {
 
 export enum FoodStatus {
   Active = 'active',
+  Soon = 'soon',
   Expired = 'expired',
 }

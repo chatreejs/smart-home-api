@@ -11,6 +11,9 @@ export class Food {
   @Column('int')
   quantity: number;
 
+  @Column({ type: 'nvarchar', length: 50 })
+  unit: string;
+
   @Column()
   buyDate: Date;
 

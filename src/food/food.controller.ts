@@ -1,19 +1,25 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
-  HttpCode,
+  NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
+  Version,
 } from '@nestjs/common';
 import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { FoodRequest } from 'src/core/model/request/food-request';
 import {
   FoodResponse,
   FoodStatus,
 } from 'src/core/model/response/food-response';
+import { Food } from './food.entity';
 import { FoodService } from './food.service';
 
 @ApiTags('Food')
@@ -21,9 +27,8 @@ import { FoodService } from './food.service';
 export class FoodController {
   constructor(private readonly foodService: FoodService) {}
 
+  @Version('1')
   @Get()
-  @HttpCode(200)
-  @HttpCode(204)
   @ApiResponse({ type: [FoodResponse] })
   async getFoods(): Promise<FoodResponse[]> {
     const foods = await this.foodService.findAll();
@@ -33,52 +38,78 @@ export class FoodController {
     return foods.map((food) => {
       const now = new Date();
       return <FoodResponse>{
-        id: food.id,
-        name: food.name,
-        quantity: food.quantity,
-        buyDate: food.buyDate,
-        expireDate: food.expireDate,
-        status: now > food.expireDate ? FoodStatus.Expired : FoodStatus.Active,
+        ...food,
+        status: this.getExpirationStatus(food),
       };
     });
   }
 
-  @Get(':foodId')
-  @HttpCode(200)
-  @HttpCode(404)
-  @ApiParam({ name: 'foodId' })
-  @ApiResponse({ type: FoodResponse })
-  async getFoodById(@Param('foodId') foodId): Promise<FoodResponse> {
-    console.log(typeof foodId);
-    const food = await this.foodService.findById(foodId);
-    if (food == null) {
-      return null;
-    }
-    const now = new Date();
-    return <FoodResponse>{
-      id: food.id,
-      name: food.name,
-      quantity: food.quantity,
-      buyDate: food.buyDate,
-      expireDate: food.expireDate,
-      status: now > food.expireDate ? FoodStatus.Expired : FoodStatus.Active,
+  @Version('1')
+  @Get('index')
+  async indexV2(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+  ): Promise<Pagination<FoodResponse>> {
+    limit = limit > 100 ? 100 : limit;
+    const pagination = await this.foodService.paginate({
+      page,
+      limit,
+    });
+    return <Pagination<FoodResponse>>{
+      items: pagination.items.map((food) => {
+        const now = new Date();
+        return <FoodResponse>{
+          ...food,
+          status: this.getExpirationStatus(food),
+        };
+      }),
+      meta: pagination.meta,
     };
   }
 
+  @Version('1')
+  @Get(':foodId')
+  @ApiParam({ name: 'foodId' })
+  @ApiResponse({ type: FoodResponse })
+  async getFoodById(@Param('foodId') foodId: string): Promise<FoodResponse> {
+    const food = await this.foodService.findById(+foodId);
+    if (food === null || food === undefined) {
+      throw new NotFoundException();
+    }
+    const now = new Date();
+    return <FoodResponse>{
+      ...food,
+      status: this.getExpirationStatus(food),
+    };
+  }
+
+  @Version('1')
   @Post()
-  @HttpCode(201)
   @ApiBody({ type: FoodRequest })
   createFood(@Body() food: FoodRequest) {
     this.foodService.createFood(food);
   }
 
-  @Patch()
-  updateFood() {
+  @Version('1')
+  @Patch(':foodId')
+  updateFood(@Param('foodId') foodId: string) {
     return null;
   }
 
+  @Version('1')
   @Delete()
   deleteFood() {
     return null;
+  }
+
+  private getExpirationStatus(food: Food): FoodStatus {
+    const now = new Date();
+    const dateDiff = food.expireDate.getTime() - now.getTime();
+    if (dateDiff < 0) {
+      return FoodStatus.Expired;
+    } else if (dateDiff < 1000 * 60 * 60 * 24 * 3) {
+      return FoodStatus.Soon;
+    }
+    return FoodStatus.Active;
   }
 }
