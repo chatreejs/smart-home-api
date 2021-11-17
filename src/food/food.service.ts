@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   IPaginationOptions,
@@ -6,7 +6,7 @@ import {
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { FoodRequest } from 'src/core/model/request/food-request';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Food } from './food.entity';
 
 @Injectable()
@@ -27,7 +27,11 @@ export class FoodService {
     return this.foodRepository.findOne(id);
   }
 
-  createFood(data: FoodRequest) {
+  async findByIds(ids: number[]): Promise<Food[]> {
+    return this.foodRepository.findByIds(ids);
+  }
+
+  createFood(data: FoodRequest): void {
     const food = new Food();
     food.name = data.name;
     food.quantity = data.quantity;
@@ -37,7 +41,7 @@ export class FoodService {
     this.foodRepository.save(food);
   }
 
-  updateFood(id: number, data: FoodRequest) {
+  updateFood(id: number, data: FoodRequest): void {
     const food = new Food();
     food.name = data.name;
     food.quantity = data.quantity;
@@ -47,11 +51,11 @@ export class FoodService {
     this.foodRepository.update(id, food);
   }
 
-  deleteFood(id: number) {
+  deleteFood(id: number): void {
     this.foodRepository.delete(id);
   }
 
-  deleteMultipleFoods(ids: number[]) {
+  deleteMultipleFoods(ids: number[]): void {
     this.foodRepository.delete(ids);
   }
 }

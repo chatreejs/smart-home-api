@@ -4,6 +4,8 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   NotFoundException,
   Param,
   ParseIntPipe,
@@ -91,7 +93,7 @@ export class FoodController {
   @Version('1')
   @Post()
   @ApiBody({ type: FoodRequest })
-  createFood(@Body() food: FoodRequest) {
+  createFood(@Body() food: FoodRequest): void {
     this.foodService.createFood(food);
   }
 
@@ -99,21 +101,37 @@ export class FoodController {
   @Put(':foodId')
   @ApiParam({ name: 'foodId' })
   @ApiBody({ type: FoodRequest })
-  updateFood(@Param('foodId') foodId: string, @Body() food: FoodRequest) {
-    this.foodService.updateFood(+foodId, food);
+  async updateFood(
+    @Param('foodId') foodId: string,
+    @Body() foodRequest: FoodRequest,
+  ): Promise<void> {
+    const food = await this.foodService.findById(+foodId);
+    if (food === null || food === undefined) {
+      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+    }
+    this.foodService.updateFood(+foodId, foodRequest);
   }
 
   @Version('1')
   @Delete(':foodId')
   @ApiParam({ name: 'foodId' })
-  deleteFood(@Param('foodId') foodId: string) {
+  async deleteFood(@Param('foodId') foodId: string): Promise<void> {
+    const food = await this.foodService.findById(+foodId);
+    if (food === null || food === undefined) {
+      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+    }
     this.foodService.deleteFood(+foodId);
   }
 
   @Version('1')
-  @Delete('delete-multiple')
-  deleteFoods(@Query('foodIds') foodIds: string) {
+  @Delete()
+  @ApiQuery({ name: 'foodIds', required: true })
+  async deleteFoods(@Query('foodIds') foodIds: string): Promise<void> {
     const foodIdsArray = foodIds.split('^').map((id) => +id);
+    const foods = await this.foodService.findByIds(foodIdsArray);
+    if (foods.length === 0) {
+      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+    }
     this.foodService.deleteMultipleFoods(foodIdsArray);
   }
 
