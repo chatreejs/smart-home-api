@@ -58,12 +58,17 @@ export class FoodController {
   async index(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+    @Query('search') search = '',
   ): Promise<Pagination<FoodResponse>> {
     limit = limit > 100 ? 100 : limit;
-    const pagination = await this.foodService.paginate({
-      page,
-      limit,
-    });
+    console.log(search);
+    const pagination = await this.foodService.paginateFilterByName(
+      {
+        page,
+        limit,
+      },
+      search,
+    );
     return <Pagination<FoodResponse>>{
       items: pagination.items.map((food) => {
         return <FoodResponse>{

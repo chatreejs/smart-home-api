@@ -6,7 +6,7 @@ import {
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { FoodRequest } from 'src/core/model/request/food-request';
-import { Repository } from 'typeorm';
+import { FindConditions, Like, Repository } from 'typeorm';
 import { Food } from './food.entity';
 
 @Injectable()
@@ -17,6 +17,21 @@ export class FoodService {
 
   async paginate(options: IPaginationOptions): Promise<Pagination<Food>> {
     return paginate<Food>(this.foodRepository, options);
+  }
+
+  async paginateFilterByName(
+    options: IPaginationOptions,
+    search: string,
+  ): Promise<Pagination<Food>> {
+    const queryBuilder = this.foodRepository.createQueryBuilder('food').where([
+      {
+        name: Like(`%${search}%`),
+      },
+      {
+        quantity: Like(`%${search}%`),
+      },
+    ]);
+    return paginate<Food>(queryBuilder, options);
   }
 
   async findAll(): Promise<Food[]> {
