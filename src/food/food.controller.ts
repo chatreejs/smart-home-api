@@ -7,8 +7,8 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
-  Patch,
   Post,
+  Put,
   Query,
   Version,
 } from '@nestjs/common';
@@ -42,7 +42,6 @@ export class FoodController {
       return null;
     }
     return foods.map((food) => {
-      const now = new Date();
       return <FoodResponse>{
         ...food,
         status: this.getExpirationStatus(food),
@@ -65,7 +64,6 @@ export class FoodController {
     });
     return <Pagination<FoodResponse>>{
       items: pagination.items.map((food) => {
-        const now = new Date();
         return <FoodResponse>{
           ...food,
           status: this.getExpirationStatus(food),
@@ -84,7 +82,6 @@ export class FoodController {
     if (food === null || food === undefined) {
       throw new NotFoundException();
     }
-    const now = new Date();
     return <FoodResponse>{
       ...food,
       status: this.getExpirationStatus(food),
@@ -99,15 +96,25 @@ export class FoodController {
   }
 
   @Version('1')
-  @Patch(':foodId')
-  updateFood(@Param('foodId') foodId: string) {
-    return null;
+  @Put(':foodId')
+  @ApiParam({ name: 'foodId' })
+  @ApiBody({ type: FoodRequest })
+  updateFood(@Param('foodId') foodId: string, @Body() food: FoodRequest) {
+    this.foodService.updateFood(+foodId, food);
   }
 
   @Version('1')
-  @Delete()
-  deleteFood() {
-    return null;
+  @Delete(':foodId')
+  @ApiParam({ name: 'foodId' })
+  deleteFood(@Param('foodId') foodId: string) {
+    this.foodService.deleteFood(+foodId);
+  }
+
+  @Version('1')
+  @Delete('delete-multiple')
+  deleteFoods(@Query('foodIds') foodIds: string) {
+    const foodIdsArray = foodIds.split('^').map((id) => +id);
+    this.foodService.deleteMultipleFoods(foodIdsArray);
   }
 
   private getExpirationStatus(food: Food): FoodStatus {

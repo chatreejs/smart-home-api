@@ -36,4 +36,22 @@ export class FoodService {
     food.expireDate = new Date(data.expireDate);
     this.foodRepository.save(food);
   }
+
+  updateFood(id: number, data: FoodRequest) {
+    const food = new Food();
+    food.name = data.name;
+    food.quantity = data.quantity;
+    food.unit = data.unit;
+    food.buyDate = new Date(data.buyDate);
+    food.expireDate = new Date(data.expireDate);
+    this.foodRepository.update(id, food);
+  }
+
+  deleteFood(id: number) {
+    this.foodRepository.delete(id);
+  }
+
+  deleteMultipleFoods(ids: number[]) {
+    this.foodRepository.delete(ids);
+  }
 }
